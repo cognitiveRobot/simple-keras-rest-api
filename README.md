@@ -29,7 +29,7 @@ Below you can see the image we wish to classify, a _dog_, but more specifically 
 The Flask + Keras server can be started by running:
 
 ```sh
-$ python run_keras_server.py 
+$ python run_keras_server.py
 Using TensorFlow backend.
  * Loading Keras model and Flask starting server...please wait until server has fully started
 ...
@@ -47,26 +47,26 @@ $ curl -X POST -F image=@dog.jpg 'http://localhost:5000/predict'
 {
   "predictions": [
     {
-      "label": "beagle", 
+      "label": "beagle",
       "probability": 0.9901360869407654
-    }, 
+    },
     {
-      "label": "Walker_hound", 
+      "label": "Walker_hound",
       "probability": 0.002396771451458335
-    }, 
+    },
     {
-      "label": "pot", 
+      "label": "pot",
       "probability": 0.0013951235450804234
-    }, 
+    },
     {
-      "label": "Brittany_spaniel", 
+      "label": "Brittany_spaniel",
       "probability": 0.001283277408219874
-    }, 
+    },
     {
-      "label": "bluetick", 
+      "label": "bluetick",
       "probability": 0.0010894243605434895
     }
-  ], 
+  ],
   "success": true
 }
 ```
@@ -74,10 +74,30 @@ $ curl -X POST -F image=@dog.jpg 'http://localhost:5000/predict'
 Or programmatically:
 
 ```sh
-$ python simple_request.py 
+$ python simple_request.py
 1. beagle: 0.9901
 2. Walker_hound: 0.0024
 3. pot: 0.0014
 4. Brittany_spaniel: 0.0013
 5. bluetick: 0.0011
 ```
+
+## Issues
+* ValueError("Tensor %s is not an element of this graph." % obj)
+```
+return self._as_graph_element_locked(obj, allow_tensor, allow_operation)
+File "/home/zhossain/myProjects/third-party-projects/deep-learning/image-classification/simple-keras-rest-api/venv/lib/python3.6/site-packages/tensorflow/python/framework/ops.py", line 3402, in _as_graph_element_locked
+raise ValueError("Tensor %s is not an element of this graph." % obj)
+ValueError: Tensor Tensor("fc1000/Softmax:0", shape=(?, 1000), dtype=float32) is not an element of this graph.
+```
+  Solution:
+
+  A global variable graph was created. Thanks to [Richardson-souza](https://github.com/jrosebr1/simple-keras-rest-api/pull/8/commits/083f4fa8635775a12a09710134531bcff6a5c4b4)
+  ```
+global model, graph
+	model = ResNet50(weights="imagenet")
+	graph = tf.get_default_graph()
+And with default graph predictions were made:
+with graph.as_default():
+        preds = model.predict(image)
+  ```
